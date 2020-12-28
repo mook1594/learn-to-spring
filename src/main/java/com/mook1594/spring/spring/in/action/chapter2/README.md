@@ -170,7 +170,7 @@ public class WebConfig implements WebMvcConfigurer {
 |Mustache|spring-boot-starter-mustache|
 |Thymeleaf|spring-boot-starter-thymeleaf|
 
-#### 5.1 템플릿 캐
+#### 5.1 템플릿 캐싱 
 |템플릿|캐싱 속성|
 |----|-------|
 |FreeMarker|spring.freemarker.cache|
