@@ -86,5 +86,83 @@ public String ordersForUser (
 @Component
 @ConfigurationProperties(prefix="taco.orders")
 @Data
+public class OrderProps {
+    private int pageSize = 20;
+}
+
+@Controller
+@RequestMapping("/orders")
+@SessionAttributes("order")
+public class OrderController {
+    private OrderProps props;
+    private OrderController(OrderRepository orderRepo,
+                OrderProps props) {
+        this.orderRepo = orderRepo;
+        this.props = props;
+    }
+
+}
 ```
 #### 구성 속성 메타데이터 선언
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>
+        spring-boot-configuration-processor
+    </artifactId>
+    <optional>true</optional>
+</dependency>
+```
+##### taco-cloud/src/main/resources/META-INF/additional-spring-configuration-metadata.json
+```
+{
+    "properties": [
+        {
+            "name": "taco.orders.page-size",
+            "type": "int",
+            "description": "Sets the maximum number of orders to display in a list"
+        }
+    ]
+}
+```
+
+### 5.2 프로파일 사용해서 구성하기
+#### 프로파일 특정 속성 정의
+- 파일 이름 규칙을 따라야한다
+- application-{프로파일 이름}.yml
+- application-{프로파일 이름}.properties
+#### 프로파일을 사용해서 조건별로 빈 생성
+- @Profile 애노테이션 활용
+```java
+@Bean
+@Profile("dev")
+public CommandLineRunner dataLoader(IngredientRepository repo,
+    UserRepository userRepo, PasswordEncoder encoder) {
+    ...
+}   
+```
+```java
+@Bean
+@Profile({"dev", "qa"})
+public CommandLineRunner dataLoader(IngredientRepository repo,
+     UserRepository userRepo, PasswordEncoder encoder) {
+     ...
+ }  
+```
+```java
+@Bean
+@Profile("!prod")
+public CommandLineRunner dataLoader(IngredientRepository repo,
+     UserRepository userRepo, PasswordEncoder encoder) {
+     ...
+ }  
+```
+```java
+@Profile("!prod", "!qa")
+@Configuration
+public class DevelopmentConfig {
+    @Bean
+    public CommandLineRunner dataLoader(IngredientRepository repo,
+        UserRepository userRepo, PasswordEncoder encoder)   
+}
+```
