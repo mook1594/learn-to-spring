@@ -7,3 +7,6 @@
 ### [Chapter3. 데이터로 작업하기](./chapter3/README.md)
 ### [Chapter4. 스프링 시큐리티](./chapter4/README.md)
 ### [Chapter5. 구성 속성 사용하기](./chapter5/README.md)
+### [Chapter6. REST 서비스 생성하기](./chapter6/README.md)
+### [Chapter7. REST 서비스 사용하기](./chapter7/README.md)
+### [Chapter8. 비동기 메시지 전송하기](./chapter8/README.md)
