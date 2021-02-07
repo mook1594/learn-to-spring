@@ -12,3 +12,4 @@
 ### [Chapter8. 비동기 메시지 전송하기](./chapter8/README.md)
 
 ### [Chapter16. 스프링 부트 액추에이터 사용하기](./chapter16/README.md)
+### [Chapter17. 스프링 관리하기](./chapter17/README.md)
