@@ -109,7 +109,7 @@ Flux<Long> intervalFlux = Flux.interval(Duration.ofSeconds(1))
     .take(5);
 ```
 #### 리액티브 타입 결합
-##### delayElements(), delaySubscription()
+##### mergeWith()
 ```java
 Flux<String> characterFlux = Flux
     .just("Garfield", "Kojak", "Barbossa")
@@ -129,7 +129,7 @@ StepVerifier.create(mergedFlux)
     .expectNext("Apples")
     .verifyComplete();
 ```
-##### mergeWith()
+##### zip()
 ```java
 Flux<String> characterFlux = Flux
     .just("Garfield", "Kojak", "Barbossa");
@@ -140,5 +140,207 @@ Flux<Tuple2<String, String>> zippedFlux =
     Flux.zip(characterFlux, foodFlux);
 StepVerifier.create(zippedFlux)
     .expectNextMatches(p ->
-        p.getT1().)
+        p.getT1().equals("Garfield") && p.getT2().equals("Lasagna"))
+    .expectNextMatches(p ->
+        p.getT1().equals("Kojak") && p.getT2().equals("Lollipops"))
+    .expectNextMatches(p ->
+        p.getT1().equals("Barbossa") && p.getT2().equals("Apples"))
+    .verifyComplete();
+```
+```java
+Flux<String> characterFlux = Flux
+    .just("Garfield", "Kojak", "Barbossa");
+Flux<String> foodFlux = Flux
+    .just("Lasagna", "Lollipops", "Apples");
+
+Flux<String> zippedFlux = 
+    Flux.zip(characterFlux, foodFlux, (c, f) -> c + " eats " + f);
+
+StepVerifier.create(zippedFlux)
+    .expectNext("Garfield eats Lasagna")
+    .expectNext("Kojak eats Lollipops")
+    .expectNext("Barbossa eats Apples")
+    .verifyComplete();
+```
+##### first()
+```java
+Flux<String> slowFlux = Flux.just("tortoise", "snail", "sloth")
+    .delaySubscription(Duration.ofMillis(100));
+Flux<String> fastFlux = Flux.just("here", "cheetah", "squirrel");
+
+Flux<String> firstFlux = Flux.first(slowFlux, fastFlux);
+
+StepVerifier.create(firstFlux)
+    .expectNext("here")
+    .expectNext("cheetah")
+    .expectNext("squirrel")
+    .verifyComplete();
+```
+#### 리액티브 스트림의 변환과 필터링
+##### skip()
+: 지정된 수 만큼 건너뜀
+```java
+Flux<String> skipFlux = Flux.just("one", "two", "skip a few", "ninety nine", "one hundred")
+    .skip(3);
+
+StepVerifier.create(skipFlux)
+    .expectNext("ninety nine", "one hundred")
+    .verifyComplete(); 
+```
+: 일정 시간을 건너뜀
+```java
+Flux<String> skipFlux = Flux.just("one", "two", "skip a few", "ninety nine", "one hundred")
+    .delayElements(Duration.ofSeconds(1))
+    .skip(Duration.ofSeconds(4));
+
+StepVerifier.create(skipFlux)
+    .expectNext("ninety nine", "one hundred")
+    .verifyComplete();
+```
+##### take()
+```java
+Flux<String> nationalParkFlux = Flux.just("Yellowtone", "Yosemite", "Grand Canyon", "Zion", "Grand Teton")
+    .take(3);
+
+StepVerifier.create(nationalParkFlux)
+    .expectNext("Yellowtone", "Yosemite", "Grand Canyon")
+    .verifyComplete();
+```
+```java
+Flux<String> nationalParkFlux = Flux.just("Yellowtone", "Yosemite", "Grand Canyon", "Zion", "Grand Teton")
+    .delayElements(Duration.ofSeconds(1))
+    .take(Duration.ofMillis(3500));
+
+StepVerifier.create(nationalParkFlux)
+    .expectNext("Yellowtone", "Yosemite", "Grand Canyon")
+    .verifyComplete();
+```
+##### filter()
+```java
+Flux<String> nationalParkFlux = Flux.just("Yellowstone", "Yosemite", "Grand Canyon", "Zion", "Grand Teton")
+    .filter(np -> !np.contains(" "));
+
+StepVerifier.create(nationalParkFlux)
+    .expectNext("Yellowtone", "Yosemite", "Zion")
+    .verifyComplete();
+```
+##### distinct()
+: 중복 제거
+```java
+Flux<String> animalFlux = Flux.just("dog", "cat", "bird", "dog", "bird", "anteater")
+    .distinct();
+
+StepVerifier.create(animalFlux)
+    .expectNext("dog", "cat", "bird", "anteater")
+    .verifyComplete();
+```
+##### map()
+```java
+Flux<Player> playerFlux = Flux
+    .just("Michael Jordan", "Scottie Pippen", "Steve Kerr")
+    .map(n -> {
+        String[] split = n.split("\\s");
+        return new Player(split[0], split[1]);
+    });
+
+StepVerifier.create(playerFlux)
+    .expectNext("Michael", "Jordan")
+    .expectNext("Scottie", "Pippen")
+    .expectNext("Steve", "Kerr")
+    .verifyComplete();
+```
+##### flatMap()
+```java
+Flux<Player> playerFlux = Flux
+    .just("Michael Jordan", "Scottie Pippen", "Steve Kerr")
+    .fluxMap(n -> Mono.just(n)
+        .map(n -> {
+            String[] split = n.split("\\s");
+            return new Player(split[0], split[1]);
+        })
+        .subscribeOn(Schedulers.parallel())
+    );
+
+List<Player> playerList = Arrays.asList(
+    new Player("Michael", "Jordan"),
+    new Player("Scottie", "Pippen"),
+    new Player("Steve", "Kerr")
+);
+
+StepVerifier.create(playerFlux)
+    .expectNextMatches(p -> playerList.contains(p))
+    .expectNextMatches(p -> playerList.contains(p))
+    .expectNextMatches(p -> playerList.contains(p))
+    .verifyComplete();
+```
+- .parallel(): 고정풀에서 가져온 작업 스레드에서 구독을 실행
+- .immediate(): 현재 스레드에서 구독 실행
+- .single(): 단일 재사용 가능한 스레드에서 구독 실행.
+- .newSingle(): 매 호출마다 전용 스레드에서 구독 실행
+- .elastic(): 무한 신축성 스레드에서 구독 실행.
+
+#### 리액티브 스트림의 데이터 버퍼링하기
+##### buffer()
+```java
+Flux<String> fruitFlux = Flux.just("apple", "orange", "banana", "kiwi", "strawberry");
+
+Flux<List<String>> bufferedFlux = fruitFlux.buffer(3);
+
+StepVerifier.create(bufferedFlux)
+    .expectNext(Arrays.asList("apple", "orange", "banana"))
+    .expectNext(Arrays.asList("kiwi", "strawberry"))
+    .verifyComplete();
+```
+```java
+Flux.just("apple", "orange", "banana", "kiwi", "strawberry")
+    .buffer(3)
+    .flatMap(x -> 
+        Flux.fromIterable(x)
+            .map(y -> y.toUpperCase())
+            .subscribeOn(Schedulers.parallel())
+            .log()
+        ).subscribe();
+```
+##### collectList()
+```JAVA
+Flux<String> fruitFlux = Flux.just("apple", "orange", "banana", "kiwi", "strawberry");
+
+Mono<List<String>> fruitListMono = fruitFlux.collectList();
+
+StepVerifier.create(fruitListMono)
+    .expectNext(Arrays.asList("apple", "orange", "banana", "kiwi", "strawberry"))
+    .verifyComplete();
+```
+##### collectMap()
+```java
+Flux<String> animalFlux = Flux.just("aardvark", "elephant", "koala", "eagle", "kangaroo");
+
+Mono<Map<Character, String>> animalMapMono = animalFlux.collectMap(a -> a.charAt(0));
+
+StepVerifier.create(animalMapMono)
+    .expectNextMatches(map -> {
+        return
+            map.size == 3 &&
+            map.get('a').equals("aardvark") &&
+            map.get('e').equals("eagle") &&
+            map.get('k').equals("kangaroo");
+    })
+    .verifyComplete();
+```
+#### 리액티브 타입에 로직 오퍼레이션 수행하기
+##### all()
+```java
+Flux<String> animalFlux = Flux.just("aardvark", "elephant", "koala", "eagle", "kangaroo");
+Mono<Boolean> hasAMono = animalFlux.all(a -> a.contains("a"));
+StepVerifier.create(hasAMono)
+    .expectNext(true)
+    .verifyComplete();
+```
+##### any()
+```java
+Flux<String> animalFlux = Flux.just("aardvark", "elephant", "koala", "eagle", "kangaroo");
+Mono<Boolean> hasZMono = animalFlux.any(a -> a.contains("z"));
+StepVerifier.create(hasTMono)
+    .expectNext(false)
+    .verifyComplete();
 ```
