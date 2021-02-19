@@ -13,6 +13,7 @@
 
 ### [Chapter10. 리액터 개요](./chapter10/README.md)
 ### [Chapter11. 리액티브 API 개발](./chapter11/README.md)
+### [Chapter12. 리액티브 데이터 퍼시스턴스](./chapter12/README.md)
 
 ### [Chapter16. 스프링 부트 액추에이터 사용하기](./chapter16/README.md)
 ### [Chapter17. 스프링 관리하기](./chapter17/README.md)
