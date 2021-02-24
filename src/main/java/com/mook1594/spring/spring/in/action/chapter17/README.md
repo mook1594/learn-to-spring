@@ -87,3 +87,37 @@ eureka:
       user.name: admin
       user.password: password
 ```
+```java
+@Configuration
+public class SecuritySecureConfig extends WebSecurityConfigurerAdapter {
+	private final AdminServerProperties adminServer;
+
+	public SecuritySecureConfig(AdminServerProperties adminServer) {
+		this.adminServer = adminServer;
+	}
+
+	@Override
+	protected void configure(HttpSecurity http) throws Exception {
+		SavedRequestAwareAuthenticationSuccessHandler successHandler = new SavedRequestAwareAuthenticationSuccessHandler();
+		successHandler.setTargetUrlParameter("redirectTo");
+		successHandler.setDefaultTargetUrl(this.adminServer.path("/"));
+
+		http.authorizeRequests()
+			.antMatchers(this.adminServer.path("/assets/**")).permitAll()
+			.antMatchers(this.adminServer.path("/login")).permitAll()
+			.anyRequest().authenticated()
+			.and()
+		.formLogin().loginPage(this.adminServer.path("/login")).successHandler(successHandler).and()
+			.logout().logoutUrl(this.adminServer.path("/logout")).and()
+			.httpBasic().and()
+			.csrf()
+				.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+				.ignoringAntMatchers(
+					this.adminServer.path("/instances"),
+					this.adminServer.path("/actuator/**")
+				);
+
+	}
+}
+
+```
