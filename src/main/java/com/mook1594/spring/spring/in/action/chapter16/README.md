@@ -104,6 +104,15 @@ management:
 - 메모리나 스레드 문제를 찾는데 사용하 수 있는 gzip압축 형태의 HPROF 힙 덤프 파일을 다운로드 한다. `(힙 덤프 사용방법 보기)`
 ##### /httptrace: HTTP 요청 추적하기
 - 가장 최근 100개의 요청
+```java
+@Configuration
+public class ActuatorConfig {
+	@Bean
+	public HttpTraceRepository httpTraceRepository() {
+		return new InMemoryHttpTraceRepository();
+	}
+}
+```
 ##### /threaddump: 스레드 모니터링
 - 현재 실행중인 스레드 관한 스냅샷
 - 스레드의 브록킹, 록킹, 스택 기록 
