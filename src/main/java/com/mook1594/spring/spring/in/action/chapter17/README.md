@@ -143,9 +143,9 @@ spring:
   security:
     user:
       name: "admin"
-      password: "Qualson1234!@#$"
+      password: "1234"
   application:
-    name: "qualson-crm-dev"
+    name: "dev"
   boot:
     admin:
       client:
