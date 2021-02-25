@@ -87,6 +87,7 @@ eureka:
       user.name: admin
       user.password: password
 ```
+### Admin-Server
 ```java
 @Configuration
 public class SecuritySecureConfig extends WebSecurityConfigurerAdapter {
@@ -119,5 +120,51 @@ public class SecuritySecureConfig extends WebSecurityConfigurerAdapter {
 
 	}
 }
+
+```
+### Admin-Client
+```java
+@Override
+@Order(2)
+protected void configure(final HttpSecurity security) throws Exception {
+//requestMatchers을 사용하면 일치하지 않는 요청이 나머지 다른 체인에 의해 확인됩니다.
+//Actuator 외의 요청은 기존 보안 규칙을 따라야 하기 떄문에 requestMatchers를 사용해서 Actuator 보안설정만 진행한다.
+security.requestMatcher(EndpointRequest.toAnyEndpoint())
+    .authorizeRequests()
+    .antMatchers("/actuator/health").permitAll() // /actuator/health 만 인증없이 접근할 수 있도록 함
+    .anyRequest().authenticated()
+    .and()
+    .httpBasic();
+
+}
+```
+```yaml
+spring:
+  security:
+    user:
+      name: "admin"
+      password: "Qualson1234!@#$"
+  application:
+    name: "qualson-crm-dev"
+  boot:
+    admin:
+      client:
+        url: "http://localhost:8080"
+        username: "${spring.security.user.name}"
+        password: "${spring.security.user.password}"
+        instance:
+          service-url: "http://localhost:8000"
+          user:
+            name: "${spring.security.user.name}"
+            password: "${spring.security.user.password}"
+management:
+  security:
+    enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+    health:
+      show-details: "always"
 
 ```
